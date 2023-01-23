@@ -1,4 +1,4 @@
-package com.samsara.paladin.model.user;
+package com.samsara.paladin.enums;
 
 import org.springframework.security.core.GrantedAuthority;
 

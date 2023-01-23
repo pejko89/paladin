@@ -6,21 +6,20 @@ import java.util.Optional;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
 
-import com.samsara.paladin.model.user.User;
+import com.samsara.paladin.model.User;
 
 @Repository
 public interface UserRepository extends ListCrudRepository<User, Long> {
 
-    List<User> findByFirstName(String firstName);
-
-    List<User> findByLastName(String lastName);
+    Optional<User> findByUsername(String username);
 
     Optional<User> findByEmail(String email);
 
-//    List<User> findByRole(Role role);
+    List<User> findByFirstName(String firstName);
 
-    List<User> findByEnabled(boolean enabled);
+    List<User> findByLastName(String firstName);
+
+    boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);
-
 }
