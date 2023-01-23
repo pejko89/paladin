@@ -1,6 +1,9 @@
-package com.samsara.paladin.model.user;
+package com.samsara.paladin.model;
 
 import java.util.Collection;
+
+import com.samsara.paladin.enums.PermissionEnum;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -9,7 +12,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -6,8 +6,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class PaladinApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(PaladinApplication.class, args);
-	}
+    protected PaladinApplication() {
+    }
+
+    public static void main(String[] args) {
+        SpringApplication.run(PaladinApplication.class, args);
+    }
 
 }

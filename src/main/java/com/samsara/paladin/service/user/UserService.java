@@ -1,71 +1,27 @@
 package com.samsara.paladin.service.user;
 
-import java.util.Collections;
+import java.util.List;
 
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
+import com.samsara.paladin.dto.UserDto;
+import com.samsara.paladin.enums.RoleEnum;
 
-import com.samsara.paladin.exceptions.user.EmailExistsException;
-import com.samsara.paladin.model.user.RoleEnum;
-import com.samsara.paladin.model.user.User;
-import com.samsara.paladin.model.user.UserDto;
-import com.samsara.paladin.repository.RoleRepository;
-import com.samsara.paladin.repository.UserRepository;
+public interface UserService {
 
-@Service
-public class UserService {
+    UserDto registerUser(UserDto userDto, RoleEnum roleEnum);
 
-    @Autowired
-    private UserRepository userRepository;
+    UserDto updateUser(UserDto userDto);
 
-    @Autowired
-    private RoleRepository roleRepository;
+    void deleteUser(UserDto userDto);
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    List<UserDto> loadAllUsers();
 
-    @Autowired
-    private ModelMapper modelMapper;
+    UserDto loadUserByUsername(String username);
 
-    public UserDto registerNewUserAccount(UserDto accountDto) throws EmailExistsException {
-        if (emailExist(accountDto.getEmail())) {
-            throw new EmailExistsException
-                    ("There is an account with that email address: " + accountDto.getEmail());
-        }
-        User user = convertToEntity(accountDto);
-        encryptUserPassword(user);
-        assignRolesToUser(user, RoleEnum.USER.name());
-        return convertToDto(saveUser(user));
-    }
+    UserDto loadUserByEmail(String email);
 
-    private void encryptUserPassword(User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-    }
+    List<UserDto> loadByFirstName(String firstName);
 
-    private void assignRolesToUser(User user, String role) {
-        user.setRoles(Collections.singletonList(roleRepository.findByName(role)));
-    }
+    List<UserDto> loadByLastName(String lastName);
 
-    private boolean emailExist(String email) {
-        return userRepository.existsByEmail(email);
-    }
-
-    private User saveUser(User user) {
-        return userRepository.save(user);
-    }
-
-    private User convertToEntity(UserDto userDto) {
-        User user = modelMapper.map(userDto, User.class);
-        if (userDto.getId() != null) {
-            User oldUser = userRepository.findById(userDto.getId()).orElseThrow();
-            user.setId(oldUser.getId());
-        }
-        return user;
-    }
-
-    private UserDto convertToDto(User user) {
-        return modelMapper.map(user, UserDto.class);
-    }
+    boolean resetPassword(String username, String secretAnswer, String newPassword);
 }

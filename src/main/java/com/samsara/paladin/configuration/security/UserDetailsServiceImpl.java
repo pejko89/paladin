@@ -12,9 +12,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import com.samsara.paladin.model.user.Permission;
-import com.samsara.paladin.model.user.Role;
-import com.samsara.paladin.model.user.User;
+import com.samsara.paladin.model.Permission;
+import com.samsara.paladin.model.Role;
+import com.samsara.paladin.model.User;
 import com.samsara.paladin.repository.RoleRepository;
 import com.samsara.paladin.repository.UserRepository;
 
@@ -28,22 +28,28 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     private RoleRepository roleRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email)
+    public UserDetails loadUserByUsername(String username)
             throws UsernameNotFoundException {
 
-        Optional<User> user = userRepository.findByEmail(email);
+        Optional<User> user = userRepository.findByUsername(username);
 
         if (user.isEmpty()) {
-            throw new UsernameNotFoundException("username not found with email " + email);
+            throw new UsernameNotFoundException("username not found with email " + username);
         } else {
-            return loadUser(user.get());
+            return composeUserDetails(user.get());
         }
     }
 
-    private org.springframework.security.core.userdetails.User loadUser(User user) {
+    private org.springframework.security.core.userdetails.User composeUserDetails(User user) {
         return new org.springframework.security.core.userdetails.User(
-                user.getEmail(), user.getPassword(), user.isEnabled(), true, true,
-                true, getAuthorities(user.getRoles()));
+                user.getEmail(),
+                user.getPassword(),
+                user.isEnabled(),
+                true,
+                true,
+                true,
+                getAuthorities(user.getRoles())
+        );
     }
 
     private Collection<? extends GrantedAuthority> getAuthorities(
