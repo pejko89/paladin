@@ -11,6 +11,6 @@ public enum PermissionEnum implements GrantedAuthority {
 
     @Override
     public String getAuthority() {
-        return name() + "_PERMISSION";
+        return "SCOPE_" + name();
     }
 }

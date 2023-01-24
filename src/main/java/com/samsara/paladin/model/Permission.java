@@ -1,6 +1,6 @@
 package com.samsara.paladin.model;
 
-import java.util.Collection;
+import java.util.Set;
 
 import com.samsara.paladin.enums.PermissionEnum;
 
@@ -26,12 +26,12 @@ import lombok.Setter;
 public class Permission {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Enumerated(EnumType.STRING)
     private PermissionEnum name;
 
     @ManyToMany(mappedBy = "permissions")
-    private Collection<Role> roles;
+    private Set<Role> roles;
 }

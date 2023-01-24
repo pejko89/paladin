@@ -1,10 +1,11 @@
 package com.samsara.paladin.model;
 
-import java.util.Collection;
 import java.util.Date;
+import java.util.Set;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -12,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,7 +29,7 @@ import lombok.Setter;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String firstName;
@@ -36,9 +38,9 @@ public class User {
 
     private String username;
 
-    private String email;
-
     private String password;
+
+    private String email;
 
     private String about;
 
@@ -51,8 +53,6 @@ public class User {
 
     private Boolean enabled;
 
-    private Boolean tokenExpired;
-
     @ManyToMany
     @JoinTable(
             name = "users_roles",
@@ -60,9 +60,8 @@ public class User {
                     name = "user_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(
                     name = "role_id", referencedColumnName = "id"))
-    private Collection<Role> roles;
+    private Set<Role> roles;
 
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-//    private Set<Hero> heroes;
-
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private Set<Hero> heroes;
 }

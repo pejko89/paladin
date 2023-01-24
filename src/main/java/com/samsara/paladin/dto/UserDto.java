@@ -17,18 +17,18 @@ import lombok.Setter;
 @Setter
 public class UserDto {
 
-    private static final int COLUMN_MAX_SIZE = 60;
+    private static final int FIELD_MAX_SIZE = 60;
 
     private Long id;
 
     @NotEmpty
-    @Size(max = COLUMN_MAX_SIZE)
+    @Size(max = FIELD_MAX_SIZE)
     @Pattern(regexp = "^[A-Za-z][A-Za-z0-9]{2,}$",
             message = "First name should have at least 2 characters and must not contain whitespace")
     private String firstName;
 
     @NotEmpty
-    @Size(max = COLUMN_MAX_SIZE)
+    @Size(max = FIELD_MAX_SIZE)
     @Pattern(regexp = "^[A-Za-z][A-Za-z0-9]{2,}$",
             message = "Last name should have at least 2 characters and must not contain whitespace")
     private String lastName;
@@ -37,7 +37,7 @@ public class UserDto {
     private String username;
 
     @NotEmpty
-    @Size(max = COLUMN_MAX_SIZE)
+    @Size(max = FIELD_MAX_SIZE)
     @Email
     private String email;
 

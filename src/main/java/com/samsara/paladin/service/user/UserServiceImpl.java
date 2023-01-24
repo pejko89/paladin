@@ -1,6 +1,7 @@
 package com.samsara.paladin.service.user;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -35,23 +36,35 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private ModelMapper modelMapper;
 
-    public UserDto registerUser(UserDto accountDto, RoleEnum roleEnum) throws EmailExistsException {
-        if (usernameExist(accountDto.getUsername())) {
-            throw new UsernameExistsException("There is an account with that username: " + accountDto.getUsername());
+    public UserDto registerUser(UserDto userDto) throws EmailExistsException {
+        if (usernameExist(userDto.getUsername())) {
+            throw new UsernameExistsException("There is already an account with username: " + userDto.getUsername());
         }
-        if (emailExist(accountDto.getEmail())) {
-            throw new EmailExistsException("There is an account with that email address: " + accountDto.getEmail());
+        if (emailExist(userDto.getEmail())) {
+            throw new EmailExistsException("There is already an account with email address: " + userDto.getEmail());
         }
-        User user = convertToEntity(accountDto);
+        userDto.setCreatedAt(new Date());
+        userDto.setEnabled(true);
+        User user = convertToEntity(userDto);
         encryptUserPassword(user);
-        assignRolesToUser(user, roleEnum.name());
-        return convertToDto(saveUser(user));
+        assignDefaultRoleToUser(user);
+        User registeredUser = saveUser(user);
+        return convertToDto(registeredUser);
     }
 
     @Override
     public UserDto updateUser(UserDto userDto) {
-        User storedUser = modelMapper.map(userDto, User.class);
-        return convertToDto(saveUser(storedUser));
+        User storedUser = convertToEntity(userDto);
+        User updatedUser = saveUser(storedUser);
+        return convertToDto(updatedUser);
+    }
+
+    @Override
+    public UserDto assignAdminRoleToUser(UserDto userDto) {
+        User storedUser = convertToEntity(userDto);
+        storedUser.getRoles().add(roleRepository.findByName(RoleEnum.ADMIN));
+        User adminUser = saveUser(storedUser);
+        return convertToDto(adminUser);
     }
 
     @Override
@@ -70,15 +83,22 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto loadUserByUsername(String username) {
         String errorMessage = String.format("User '%s' doesn't exist!", username);
-        Optional<User> optionalUser = userRepository.findByUsername(username);
-        return convertToDtoOrThrow(optionalUser, errorMessage);
+        return userRepository.findByUsername(username)
+                .map(this::convertToDto)
+                .orElseThrow(
+                        () -> new UserNotFoundException(errorMessage)
+                );
+
     }
 
     @Override
     public UserDto loadUserByEmail(String email) {
         String errorMessage = String.format("User with email '%s' doesn't exist!", email);
-        Optional<User> optionalUser = userRepository.findByEmail(email);
-        return convertToDtoOrThrow(optionalUser, errorMessage);
+        return userRepository.findByEmail(email)
+                .map(this::convertToDto)
+                .orElseThrow(
+                        () -> new UserNotFoundException(errorMessage)
+                );
     }
 
     @Override
@@ -119,20 +139,12 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
     }
 
-    private void assignRolesToUser(User user, String role) {
-        user.setRoles(Collections.singletonList(roleRepository.findByName(role)));
+    private void assignDefaultRoleToUser(User user) {
+        user.setRoles(Collections.singleton(roleRepository.findByName(RoleEnum.USER)));
     }
 
     private User saveUser(User user) {
         return userRepository.save(user);
-    }
-
-    private UserDto convertToDtoOrThrow(Optional<User> users, String errorMessage) {
-        return users
-                .map(this::convertToDto)
-                .orElseThrow(
-                        () -> new UserNotFoundException(errorMessage)
-                );
     }
 
     private List<UserDto> convertToDtoList(List<User> users) {

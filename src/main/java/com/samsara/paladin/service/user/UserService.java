@@ -3,13 +3,14 @@ package com.samsara.paladin.service.user;
 import java.util.List;
 
 import com.samsara.paladin.dto.UserDto;
-import com.samsara.paladin.enums.RoleEnum;
 
 public interface UserService {
 
-    UserDto registerUser(UserDto userDto, RoleEnum roleEnum);
+    UserDto registerUser(UserDto userDto);
 
     UserDto updateUser(UserDto userDto);
+
+    UserDto assignAdminRoleToUser(UserDto userDto);
 
     void deleteUser(UserDto userDto);
 

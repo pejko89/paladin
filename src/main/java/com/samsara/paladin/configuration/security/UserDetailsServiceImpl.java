@@ -15,10 +15,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import com.samsara.paladin.model.Permission;
 import com.samsara.paladin.model.Role;
 import com.samsara.paladin.model.User;
+import com.samsara.paladin.repository.PermissionRepository;
 import com.samsara.paladin.repository.RoleRepository;
 import com.samsara.paladin.repository.UserRepository;
 
-//@Service("userDetailsService")
 public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Autowired
@@ -27,11 +27,14 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Autowired
     private RoleRepository roleRepository;
 
+    @Autowired
+    private PermissionRepository permissionRepository;
+
     @Override
     public UserDetails loadUserByUsername(String username)
             throws UsernameNotFoundException {
 
-        Optional<User> user = userRepository.findByUsername(username);
+        Optional<User> user = userRepository.getUsersWithFetchedRoles(username);
 
         if (user.isEmpty()) {
             throw new UsernameNotFoundException("username not found with email " + username);
@@ -42,13 +45,13 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     private org.springframework.security.core.userdetails.User composeUserDetails(User user) {
         return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
+                user.getUsername(),
                 user.getPassword(),
-                user.isEnabled(),
+                user.getEnabled(),
                 true,
                 true,
                 true,
-                getAuthorities(user.getRoles())
+                getAuthorities(roleRepository.getRolesByUser(user.getUsername()))
         );
     }
 
@@ -62,10 +65,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         List<Permission> permissions = new ArrayList<>();
         for (Role role : roles) {
             grantedAuthorities.add(role.getName().getAuthority());
-            permissions.addAll(role.getPermissions());
+            permissions.addAll(permissionRepository.getPermissionsByRole(role.getName()));
         }
         for (Permission permission : permissions) {
-            grantedAuthorities.add(permission.getName().getAuthority());
+            grantedAuthorities.add(permission.getName().name());
         }
         return grantedAuthorities;
     }

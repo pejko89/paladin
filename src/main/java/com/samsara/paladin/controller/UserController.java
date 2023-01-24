@@ -1,71 +1,48 @@
 package com.samsara.paladin.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.samsara.paladin.dto.UserDto;
+import com.samsara.paladin.service.user.UserServiceImpl;
+
+import jakarta.validation.Valid;
+
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 public class UserController {
 
-//    @Autowired
-//    private UserServiceImpl userService;
+    @Autowired
+    private UserServiceImpl userService;
 
-//    @PostMapping("/register")
-//    public ResponseEntity<UserDto> registerUser(@Valid @RequestBody UserDto userDto) {
-//        User user = convertToEntity(userDto);
-//        user.setRoles(Role.USER);
-//        UserDto userResponse = convertToDto(userService.createUser(user));
-//        return new ResponseEntity<>(userResponse, HttpStatus.CREATED);
-//    }
-//
-//    @PostMapping("/register/admin")
-//    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-//    public UserDto registerAdmin(@Valid @RequestBody UserDto userDto) {
-//        User user = convertToEntity(userDto);
-//        user.setRole(Role.ADMIN);
-//        User createdUser = userService.createUser(user);
-//        return convertToDto(createdUser);
-//    }
-//
-//    @PutMapping("/update")
-//    public UserDto updateUser(@Valid @RequestBody UserDto userDto) {
-//        User user = convertToEntity(userDto);
-//        User createdUser = userService.updateUser(user);
-//        return convertToDto(createdUser);
-//    }
+    @PostMapping("/register")
+    public ResponseEntity<UserDto> registerNewUserAccount(@Valid @RequestBody UserDto userDto) {
+        UserDto userResponse = userService.registerUser(userDto);
+        return new ResponseEntity<>(userResponse, HttpStatus.CREATED);
+    }
 
-//    @GetMapping("/all")
-//    public List<UserDto> returnAllUsers() {
-//        return userService.loadAllUsers()
-//                .stream()
-//                .map(this::convertToDto)
-//                .collect(Collectors.toList());
-//    }
-
-//    private UserDto convertToDto(User user) {
-//        return modelMapper.map(user, UserDto.class);
-//    }
-//
-//    private User convertToEntity(UserDto userDto) {
-//        User user = modelMapper.map(userDto, User.class);
-//        if (userDto.getId() != null) {
-//            User oldUser = userService.loadById(userDto.getId());
-//            user.setId(oldUser.getId());
-//        }
-//        return user;
-//    }
-//
-//    @ResponseStatus(HttpStatus.BAD_REQUEST)
-//    @ExceptionHandler(MethodArgumentNotValidException.class)
-//    public Map<String, String> handleValidationExceptions(
-//            MethodArgumentNotValidException ex) {
-//        Map<String, String> errors = new HashMap<>();
-//        ex.getBindingResult().getAllErrors().forEach((error) -> {
-//            String fieldName = ((FieldError) error).getField();
-//            String errorMessage = error.getDefaultMessage();
-//            errors.put(fieldName, errorMessage);
-//        });
-//        return errors;
-//    }
-
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public Map<String, String> handleValidationExceptions(
+            MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        return errors;
+    }
 }
