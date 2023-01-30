@@ -7,18 +7,18 @@ import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.samsara.paladin.enums.RoleEnum;
+import com.samsara.paladin.enums.RoleName;
 import com.samsara.paladin.model.Role;
 
 @Repository
 public interface RoleRepository extends ListCrudRepository<Role, Long> {
 
     @Query(
-            "select u.roles "
-                    + "from User u "
-                    + "where u.username = :username "
+            "SELECT u.roles "
+                    + "FROM User u "
+                    + "WHERE u.username = :username "
     )
     List<Role> getRolesByUser(@Param("username") String username);
 
-    Role findByName(RoleEnum name);
+    Role findByName(RoleName name);
 }

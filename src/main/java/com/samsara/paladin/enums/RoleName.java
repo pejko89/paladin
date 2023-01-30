@@ -2,7 +2,7 @@ package com.samsara.paladin.enums;
 
 import org.springframework.security.core.GrantedAuthority;
 
-public enum RoleEnum implements GrantedAuthority {
+public enum RoleName implements GrantedAuthority {
 
     USER,
     ADMIN;

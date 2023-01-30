@@ -4,8 +4,11 @@ import java.util.Date;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
-import jakarta.persistence.Column;
+import com.samsara.paladin.enums.HeroType;
+
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -14,6 +17,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,26 +28,22 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
+@Builder
 public class Hero {
-
-    public static final int STANDARD_COLUMN_LENGTH = 60;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", length = STANDARD_COLUMN_LENGTH, nullable = false, unique = true)
     private String name;
 
-    @Column(name = "type", length = STANDARD_COLUMN_LENGTH, nullable = false)
-    private String type;
+    @Enumerated(EnumType.STRING)
+    private HeroType type;
 
-    @Column(name = "level", nullable = false)
     private Integer level;
 
-    @Column(name = "created", nullable = false)
     @DateTimeFormat(pattern = "dd.MM.yyyy HH:mm")
-    private Date created;
+    private Date creationDate;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")

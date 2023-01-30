@@ -14,12 +14,20 @@ import com.samsara.paladin.model.User;
 public interface UserRepository extends ListCrudRepository<User, Long> {
 
     @Query(
-            "select u "
-                    + "from User u "
-                    + "join fetch u.roles "
-                    + "where u.username = :username "
+            "SELECT u "
+                    + "FROM User u "
+                    + "JOIN FETCH u.roles "
+                    + "WHERE u.username = :username "
     )
-    Optional<User> getUsersWithFetchedRoles(@Param("username") String username);
+    Optional<User> findUserWithFetchedRoles(@Param("username") String username);
+
+    @Query(
+            "SELECT u "
+                    + "FROM User u "
+                    + "JOIN FETCH u.heroes "
+                    + "WHERE u.username = :username "
+    )
+    Optional<User> findUserWithFetchedHeroes(@Param("username") String username);
 
     Optional<User> findByUsername(String username);
 

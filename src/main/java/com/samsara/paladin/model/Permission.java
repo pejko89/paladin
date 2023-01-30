@@ -2,7 +2,7 @@ package com.samsara.paladin.model;
 
 import java.util.Set;
 
-import com.samsara.paladin.enums.PermissionEnum;
+import com.samsara.paladin.enums.PermissionName;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,6 +24,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
+@Builder
 public class Permission {
 
     @Id
@@ -30,7 +32,7 @@ public class Permission {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    private PermissionEnum name;
+    private PermissionName name;
 
     @ManyToMany(mappedBy = "permissions")
     private Set<Role> roles;

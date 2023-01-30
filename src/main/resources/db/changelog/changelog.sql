@@ -3,16 +3,16 @@
 --changeset apejkovic:1
 CREATE TABLE users (
     id INT(11) NOT NULL AUTO_INCREMENT,
-    first_name varchar(60),
-    last_name varchar(60),
+    first_name varchar(60) NOT NULL,
+    last_name varchar(60) NOT NULL,
     username varchar(60) NOT NULL UNIQUE,
     password varchar(300) NOT NULL,
-    email varchar(60) UNIQUE,
-    enabled BOOLEAN,
-    about varchar(600),
-    created TIMESTAMP,
-    secret_question varchar(60),
-    secret_answer varchar(60),
+    email varchar(60) NOT NULL UNIQUE,
+    enabled BOOLEAN NOT NULL,
+    about varchar(600) NOT NULL,
+    creation_date TIMESTAMP NOT NULL,
+    secret_question varchar(60) NOT NULL,
+    secret_answer varchar(60) NOT NULL,
     PRIMARY KEY (id)
 );
 
@@ -32,10 +32,10 @@ INSERT INTO users VALUES
 
 CREATE TABLE heroes (
     id INT(11) NOT NULL AUTO_INCREMENT,
-    name varchar(60),
-    type varchar(60),
-    level integer,
-    created TIMESTAMP,
+    name varchar(60) NOT NULL UNIQUE,
+    type varchar(60) NOT NULL,
+    level integer NOT NULL,
+    creation_date TIMESTAMP,
     user_id INT(11) NOT NULL,
     PRIMARY KEY (id),
     CONSTRAINT

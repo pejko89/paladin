@@ -2,6 +2,7 @@ package com.samsara.paladin.service.user;
 
 import java.util.List;
 
+import com.samsara.paladin.dto.ResetPasswordDetails;
 import com.samsara.paladin.dto.UserDto;
 
 public interface UserService {
@@ -10,9 +11,9 @@ public interface UserService {
 
     UserDto updateUser(UserDto userDto);
 
-    UserDto assignAdminRoleToUser(UserDto userDto);
+    UserDto assignAdminRoleToUser(String username);
 
-    void deleteUser(UserDto userDto);
+    void deleteUser(String username);
 
     List<UserDto> loadAllUsers();
 
@@ -20,9 +21,9 @@ public interface UserService {
 
     UserDto loadUserByEmail(String email);
 
-    List<UserDto> loadByFirstName(String firstName);
+    List<UserDto> loadUsersByFirstName(String firstName);
 
-    List<UserDto> loadByLastName(String lastName);
+    List<UserDto> loadUsersByLastName(String lastName);
 
-    boolean resetPassword(String username, String secretAnswer, String newPassword);
+    boolean resetUserPassword(ResetPasswordDetails resetPasswordDetails);
 }

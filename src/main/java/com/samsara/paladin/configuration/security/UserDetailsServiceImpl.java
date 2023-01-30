@@ -15,8 +15,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import com.samsara.paladin.model.Permission;
 import com.samsara.paladin.model.Role;
 import com.samsara.paladin.model.User;
-import com.samsara.paladin.repository.PermissionRepository;
-import com.samsara.paladin.repository.RoleRepository;
 import com.samsara.paladin.repository.UserRepository;
 
 public class UserDetailsServiceImpl implements UserDetailsService {
@@ -24,26 +22,20 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private PermissionRepository permissionRepository;
-
     @Override
     public UserDetails loadUserByUsername(String username)
             throws UsernameNotFoundException {
 
-        Optional<User> user = userRepository.getUsersWithFetchedRoles(username);
+        Optional<User> user = userRepository.findByUsername(username);
 
         if (user.isEmpty()) {
-            throw new UsernameNotFoundException("username not found with email " + username);
+            throw new UsernameNotFoundException("Username '" + username + "' not found!");
         } else {
-            return composeUserDetails(user.get());
+            return buildUserDetails(user.get());
         }
     }
 
-    private org.springframework.security.core.userdetails.User composeUserDetails(User user) {
+    private org.springframework.security.core.userdetails.User buildUserDetails(User user) {
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPassword(),
@@ -51,13 +43,14 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 true,
                 true,
                 true,
-                getAuthorities(roleRepository.getRolesByUser(user.getUsername()))
+                getAuthorities(user.getRoles())
         );
     }
 
     private Collection<? extends GrantedAuthority> getAuthorities(
             Collection<Role> roles) {
-        return getGrantedAuthorities(getPermissions(roles));
+        List<String> permissions = getPermissions(roles);
+        return getGrantedAuthorities(permissions);
     }
 
     private List<String> getPermissions(Collection<Role> roles) {
@@ -65,7 +58,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         List<Permission> permissions = new ArrayList<>();
         for (Role role : roles) {
             grantedAuthorities.add(role.getName().getAuthority());
-            permissions.addAll(permissionRepository.getPermissionsByRole(role.getName()));
+            permissions.addAll(role.getPermissions());
         }
         for (Permission permission : permissions) {
             grantedAuthorities.add(permission.getName().name());

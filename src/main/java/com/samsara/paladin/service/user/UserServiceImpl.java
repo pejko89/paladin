@@ -8,15 +8,17 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.samsara.paladin.dto.ResetPasswordDetails;
 import com.samsara.paladin.dto.UserDto;
-import com.samsara.paladin.enums.RoleEnum;
+import com.samsara.paladin.enums.RoleName;
 import com.samsara.paladin.exceptions.user.EmailExistsException;
-import com.samsara.paladin.exceptions.user.UserNotFoundException;
+import com.samsara.paladin.exceptions.user.EmailNotFoundException;
+import com.samsara.paladin.exceptions.user.ResetPasswordFailedException;
 import com.samsara.paladin.exceptions.user.UsernameExistsException;
+import com.samsara.paladin.exceptions.user.UsernameNotFoundException;
 import com.samsara.paladin.model.User;
 import com.samsara.paladin.repository.RoleRepository;
 import com.samsara.paladin.repository.UserRepository;
@@ -36,14 +38,14 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private ModelMapper modelMapper;
 
-    public UserDto registerUser(UserDto userDto) throws EmailExistsException {
-        if (usernameExist(userDto.getUsername())) {
-            throw new UsernameExistsException("There is already an account with username: " + userDto.getUsername());
+    public UserDto registerUser(UserDto userDto) {
+        if (userRepository.existsByUsername(userDto.getUsername())) {
+            throw new UsernameExistsException("Account with username: '" + userDto.getUsername() + "' already exist");
         }
-        if (emailExist(userDto.getEmail())) {
-            throw new EmailExistsException("There is already an account with email address: " + userDto.getEmail());
+        if (userRepository.existsByEmail(userDto.getEmail())) {
+            throw new EmailExistsException("Account with email: '" + userDto.getEmail() + "' already exist!");
         }
-        userDto.setCreatedAt(new Date());
+        userDto.setCreationDate(new Date());
         userDto.setEnabled(true);
         User user = convertToEntity(userDto);
         encryptUserPassword(user);
@@ -54,25 +56,38 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto updateUser(UserDto userDto) {
-        User storedUser = convertToEntity(userDto);
+        Optional<User> optionalUser = userRepository.findByUsername(userDto.getUsername());
+        if (optionalUser.isEmpty()) {
+            throw new UsernameNotFoundException("Username '" + userDto.getUsername() + "' not found!");
+        }
+        User storedUser = optionalUser.get();
+        modelMapper.map(userDto, storedUser);
+        if (userDto.getPassword() != null) {
+            encryptUserPassword(storedUser);
+        }
         User updatedUser = saveUser(storedUser);
         return convertToDto(updatedUser);
     }
 
     @Override
-    public UserDto assignAdminRoleToUser(UserDto userDto) {
-        User storedUser = convertToEntity(userDto);
-        storedUser.getRoles().add(roleRepository.findByName(RoleEnum.ADMIN));
+    public UserDto assignAdminRoleToUser(String username) {
+        Optional<User> optionalUser = userRepository.findByUsername(username);
+        if (optionalUser.isEmpty()) {
+            throw new UsernameNotFoundException("Username '" + username + "' not found!");
+        }
+        User storedUser = optionalUser.get();
+        storedUser.getRoles().add(roleRepository.findByName(RoleName.ADMIN));
         User adminUser = saveUser(storedUser);
         return convertToDto(adminUser);
     }
 
     @Override
-    public void deleteUser(UserDto userDto) {
-        if (!usernameExist(userDto.getUsername())) {
-            throw new UsernameNotFoundException("User '" + userDto.getUsername() + "' doesn't exist!");
+    public void deleteUser(String username) {
+        Optional<User> optionalUser = userRepository.findByUsername(username);
+        if (optionalUser.isEmpty()) {
+            throw new UsernameNotFoundException("Username '" + username + "' not found!");
         }
-        userRepository.delete(convertToEntity(userDto));
+        userRepository.delete(optionalUser.get());
     }
 
     @Override
@@ -82,65 +97,57 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto loadUserByUsername(String username) {
-        String errorMessage = String.format("User '%s' doesn't exist!", username);
         return userRepository.findByUsername(username)
                 .map(this::convertToDto)
                 .orElseThrow(
-                        () -> new UserNotFoundException(errorMessage)
+                        () -> new UsernameNotFoundException(String.format("Username '%s' not found!", username))
                 );
 
     }
 
     @Override
     public UserDto loadUserByEmail(String email) {
-        String errorMessage = String.format("User with email '%s' doesn't exist!", email);
         return userRepository.findByEmail(email)
                 .map(this::convertToDto)
                 .orElseThrow(
-                        () -> new UserNotFoundException(errorMessage)
+                        () -> new EmailNotFoundException(String.format("Email '%s' not found!", email))
                 );
     }
 
     @Override
-    public List<UserDto> loadByFirstName(String firstName) {
+    public List<UserDto> loadUsersByFirstName(String firstName) {
         return convertToDtoList(userRepository.findByFirstName(firstName));
     }
 
     @Override
-    public List<UserDto> loadByLastName(String lastName) {
+    public List<UserDto> loadUsersByLastName(String lastName) {
         return convertToDtoList(userRepository.findByLastName(lastName));
     }
 
     @Override
-    public boolean resetPassword(String username, String secretAnswer, String newPassword) {
-        User user;
-        Optional<User> optionalUser = userRepository.findByUsername(username);
-        if (optionalUser.isEmpty()) {
-            return false;
-        } else if (!optionalUser.get().getSecretAnswer().equals(secretAnswer)) {
-            return false;
-        } else {
-            user = optionalUser.get();
-        }
-        encryptUserPassword(user);
-        saveUser(user);
+    public boolean resetUserPassword(ResetPasswordDetails resetPasswordDetails) {
+
+        userRepository.findByUsername(resetPasswordDetails.getUsername())
+                .filter(user -> resetPasswordDetails.getSecretAnswer().equals(user.getSecretAnswer()))
+                .map(user -> encryptUserPassword(user, resetPasswordDetails.getNewPassword()))
+                .map(this::saveUser)
+                .orElseThrow(
+                        () -> new ResetPasswordFailedException("Password reset failed!")
+                );
         return true;
-    }
-
-    private boolean usernameExist(String username) {
-        return userRepository.existsByUsername(username);
-    }
-
-    private boolean emailExist(String email) {
-        return userRepository.existsByEmail(email);
     }
 
     private void encryptUserPassword(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
     }
 
+    private User encryptUserPassword(User user, String newPassword) {
+        user.setPassword(passwordEncoder.encode(newPassword));
+        return user;
+    }
+
     private void assignDefaultRoleToUser(User user) {
-        user.setRoles(Collections.singleton(roleRepository.findByName(RoleEnum.USER)));
+        user.setRoles(Collections.singleton(roleRepository.findByName(RoleName.USER)));
     }
 
     private User saveUser(User user) {
@@ -159,11 +166,6 @@ public class UserServiceImpl implements UserService {
     }
 
     private User convertToEntity(UserDto userDto) {
-        User user = modelMapper.map(userDto, User.class);
-        if (userDto.getId() != null) {
-            User oldUser = userRepository.findById(userDto.getId()).orElseThrow();
-            user.setId(oldUser.getId());
-        }
-        return user;
+        return modelMapper.map(userDto, User.class);
     }
 }
