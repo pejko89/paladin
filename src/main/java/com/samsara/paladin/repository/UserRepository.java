@@ -19,7 +19,7 @@ public interface UserRepository extends ListCrudRepository<User, Long> {
                     + "JOIN FETCH u.roles "
                     + "WHERE u.username = :username "
     )
-    Optional<User> findUserWithFetchedRoles(@Param("username") String username);
+    Optional<User> findUserWithRolesFetched(@Param("username") String username);
 
     @Query(
             "SELECT u "
@@ -27,7 +27,16 @@ public interface UserRepository extends ListCrudRepository<User, Long> {
                     + "JOIN FETCH u.heroes "
                     + "WHERE u.username = :username "
     )
-    Optional<User> findUserWithFetchedHeroes(@Param("username") String username);
+    Optional<User> findUserWithHeroesFetched(@Param("username") String username);
+
+    @Query(
+            "SELECT u "
+                    + "FROM User u "
+                    + "JOIN FETCH u.roles "
+                    + "JOIN FETCH u.heroes "
+                    + "WHERE u.username = :username "
+    )
+    Optional<User> findUserWithAllFetched(@Param("username") String username);
 
     Optional<User> findByUsername(String username);
 

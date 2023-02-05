@@ -19,14 +19,18 @@ import com.samsara.paladin.repository.UserRepository;
 
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    public void setUserRepository(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @Override
     public UserDetails loadUserByUsername(String username)
             throws UsernameNotFoundException {
 
-        Optional<User> user = userRepository.findByUsername(username);
+        Optional<User> user = userRepository.findUserWithRolesFetched(username);
 
         if (user.isEmpty()) {
             throw new UsernameNotFoundException("Username '" + username + "' not found!");

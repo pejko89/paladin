@@ -48,7 +48,6 @@ import com.samsara.paladin.repository.UserRepository;
 @ContextConfiguration(classes = {UserServiceImpl.class})
 public class UserServiceImplTest {
 
-    @Autowired
     private UserServiceImpl userService;
 
     @MockBean
@@ -65,6 +64,11 @@ public class UserServiceImplTest {
 
     @Captor
     private ArgumentCaptor<User> userArgumentCaptor;
+
+    @Autowired
+    public UserServiceImplTest(UserServiceImpl userService) {
+        this.userService = userService;
+    }
 
     @Test
     @DisplayName("Register user test when user is valid then correct")
@@ -188,7 +192,7 @@ public class UserServiceImplTest {
                 .password("testCryptPassword")
                 .build();
 
-        when(userRepository.findByUsername(userDto.getUsername()))
+        when(userRepository.findUserWithAllFetched(userDto.getUsername()))
                 .thenReturn(Optional.of(user));
         when(passwordEncoder.encode(user.getPassword()))
                 .thenReturn("testCryptPassword");
@@ -199,7 +203,7 @@ public class UserServiceImplTest {
 
         UserDto updatedUser = userService.updateUser(userDto);
 
-        verify(userRepository).findByUsername(userDto.getUsername());
+        verify(userRepository).findUserWithAllFetched(userDto.getUsername());
         verify(modelMapper).map(userDto, user);
         verify(passwordEncoder).encode(user.getPassword());
         verify(userRepository).save(userArgumentCaptor.capture());
@@ -224,12 +228,12 @@ public class UserServiceImplTest {
                 .username("test")
                 .build();
 
-        when(userRepository.findByUsername(userDto.getUsername()))
+        when(userRepository.findUserWithAllFetched(userDto.getUsername()))
                 .thenReturn(Optional.empty());
 
         assertThrows(UsernameNotFoundException.class, () -> {
             userService.updateUser(userDto);
-            verify(userRepository).findByUsername(userDto.getUsername());
+            verify(userRepository).findUserWithAllFetched(userDto.getUsername());
         });
     }
 
@@ -248,7 +252,7 @@ public class UserServiceImplTest {
                 .email("test@email.com")
                 .build();
 
-        when(userRepository.findByUsername(userDto.getUsername()))
+        when(userRepository.findUserWithAllFetched(userDto.getUsername()))
                 .thenReturn(Optional.of(user));
         when(userRepository.save(user))
                 .thenReturn(user);
@@ -257,7 +261,7 @@ public class UserServiceImplTest {
 
         UserDto updatedUser = userService.updateUser(userDto);
 
-        verify(userRepository).findByUsername(userDto.getUsername());
+        verify(userRepository).findUserWithAllFetched(userDto.getUsername());
         verify(modelMapper).map(userDto, user);
         verify(userRepository).save(user);
         verify(modelMapper).map(user, UserDto.class);
@@ -297,7 +301,7 @@ public class UserServiceImplTest {
         expectedRoles.add(roleUser);
         expectedRoles.add(roleAdmin);
 
-        when(userRepository.findByUsername(userDto.getUsername()))
+        when(userRepository.findUserWithAllFetched(userDto.getUsername()))
                 .thenReturn(Optional.of(user));
         when(roleRepository.findByName(RoleName.ADMIN))
                 .thenReturn(roleAdmin);
@@ -308,7 +312,7 @@ public class UserServiceImplTest {
 
         UserDto updatedUserDto = userService.assignAdminRoleToUser(userDto.getUsername());
 
-        verify(userRepository).findByUsername(userDto.getUsername());
+        verify(userRepository).findUserWithAllFetched(userDto.getUsername());
         verify(roleRepository).findByName(RoleName.ADMIN);
         verify(userRepository).save(userArgumentCaptor.capture());
         User capturedUser = userArgumentCaptor.getValue();
@@ -325,12 +329,12 @@ public class UserServiceImplTest {
                 .username("test")
                 .build();
 
-        when(userRepository.findByUsername(userDto.getUsername()))
+        when(userRepository.findUserWithAllFetched(userDto.getUsername()))
                 .thenReturn(Optional.empty());
 
         assertThrows(UsernameNotFoundException.class, () -> {
             userService.assignAdminRoleToUser(userDto.getUsername());
-            verify(userRepository).findByUsername(userDto.getUsername());
+            verify(userRepository).findUserWithAllFetched(userDto.getUsername());
             verify(userRepository, never()).save(any());
         });
     }
@@ -628,7 +632,7 @@ public class UserServiceImplTest {
                 .secretAnswer("testSecretAnswer")
                 .build();
 
-        when(userRepository.findByUsername("Test"))
+        when(userRepository.findUserWithAllFetched("Test"))
                 .thenReturn(Optional.of(storedUser));
         when(passwordEncoder.encode("newPassword"))
                 .thenReturn("encodedPassword");
@@ -637,7 +641,7 @@ public class UserServiceImplTest {
 
         boolean response = userService.resetUserPassword(resetPasswordDetails);
 
-        verify(userRepository).findByUsername("Test");
+        verify(userRepository).findUserWithAllFetched("Test");
         verify(passwordEncoder).encode("newPassword");
         verify(userRepository).save(userArgumentCaptor.capture());
         User capturedUser = userArgumentCaptor.getValue();
@@ -666,11 +670,12 @@ public class UserServiceImplTest {
                 .secretAnswer("testSecretAnswer")
                 .build();
 
-        when(userRepository.findByUsername("Test"))
+        when(userRepository.findUserWithAllFetched("Test"))
                 .thenReturn(Optional.of(storedUser));
 
         assertThrows(ResetPasswordFailedException.class, () -> {
             userService.resetUserPassword(resetPasswordDetails);
+            verify(userRepository).findUserWithAllFetched("Test");
             verify(passwordEncoder, never()).encode(anyString());
             verify(userRepository, never()).save(any());
         });

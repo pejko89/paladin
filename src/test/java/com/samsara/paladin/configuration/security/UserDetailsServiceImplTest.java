@@ -35,14 +35,15 @@ import com.samsara.paladin.repository.UserRepository;
 @SpringBootTest
 class UserDetailsServiceImplTest {
 
-    @Autowired
     private UserDetailsServiceImpl userDetailsService;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
     @MockBean
     private UserRepository userRepository;
+
+    @Autowired
+    public UserDetailsServiceImplTest(UserDetailsServiceImpl userDetailsService) {
+        this.userDetailsService = userDetailsService;
+    }
 
     @Test
     @DisplayName("Load user by username test when credentials are valid then correct")
@@ -75,12 +76,12 @@ class UserDetailsServiceImplTest {
                 .roles(roles)
                 .build();
 
-        when(userRepository.findByUsername(user.getUsername()))
+        when(userRepository.findUserWithRolesFetched(user.getUsername()))
                 .thenReturn(Optional.of(user));
 
         UserDetails authorizedUser = userDetailsService.loadUserByUsername(user.getUsername());
 
-        verify(userRepository).findByUsername(user.getUsername());
+        verify(userRepository).findUserWithRolesFetched(user.getUsername());
 
         assertAll(
                 () -> assertEquals(user.getUsername(), authorizedUser.getUsername()),
@@ -97,12 +98,12 @@ class UserDetailsServiceImplTest {
     @DisplayName("Load user by username test when credentials not valid then throw")
     void loadUserByUsernameTestWhenCredentialsNotValidThenThrow() {
 
-        when(userRepository.findByUsername("test"))
+        when(userRepository.findUserWithRolesFetched("test"))
                 .thenReturn(Optional.empty());
 
         assertThrows(UsernameNotFoundException.class, () -> {
             UserDetails authorizedUser = userDetailsService.loadUserByUsername("test");
-            verify(userRepository).findByUsername("test");
+            verify(userRepository).findUserWithRolesFetched("test");
             assertNull(authorizedUser);
         });
     }

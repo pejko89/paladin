@@ -26,17 +26,33 @@ import com.samsara.paladin.repository.UserRepository;
 @Service
 public class UserServiceImpl implements UserService {
 
-    @Autowired
     private UserRepository userRepository;
 
-    @Autowired
     private RoleRepository roleRepository;
 
-    @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Autowired
     private ModelMapper modelMapper;
+
+    @Autowired
+    public UserServiceImpl(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    @Autowired
+    public void setRoleRepository(RoleRepository roleRepository) {
+        this.roleRepository = roleRepository;
+    }
+
+    @Autowired
+    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @Autowired
+    public void setModelMapper(ModelMapper modelMapper) {
+        this.modelMapper = modelMapper;
+    }
 
     public UserDto registerUser(UserDto userDto) {
         if (userRepository.existsByUsername(userDto.getUsername())) {
@@ -56,7 +72,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto updateUser(UserDto userDto) {
-        Optional<User> optionalUser = userRepository.findByUsername(userDto.getUsername());
+        Optional<User> optionalUser = userRepository.findUserWithAllFetched(userDto.getUsername());
         if (optionalUser.isEmpty()) {
             throw new UsernameNotFoundException("Username '" + userDto.getUsername() + "' not found!");
         }
@@ -71,7 +87,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto assignAdminRoleToUser(String username) {
-        Optional<User> optionalUser = userRepository.findByUsername(username);
+        Optional<User> optionalUser = userRepository.findUserWithAllFetched(username);
         if (optionalUser.isEmpty()) {
             throw new UsernameNotFoundException("Username '" + username + "' not found!");
         }
@@ -127,7 +143,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean resetUserPassword(ResetPasswordDetails resetPasswordDetails) {
 
-        userRepository.findByUsername(resetPasswordDetails.getUsername())
+        userRepository.findUserWithAllFetched(resetPasswordDetails.getUsername())
                 .filter(user -> resetPasswordDetails.getSecretAnswer().equals(user.getSecretAnswer()))
                 .map(user -> encryptUserPassword(user, resetPasswordDetails.getNewPassword()))
                 .map(this::saveUser)

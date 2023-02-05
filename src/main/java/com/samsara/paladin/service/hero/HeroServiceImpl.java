@@ -21,14 +21,26 @@ import com.samsara.paladin.repository.UserRepository;
 @Service
 public class HeroServiceImpl implements HeroService {
 
-    @Autowired
     private HeroRepository heroRepository;
 
-    @Autowired
     private UserRepository userRepository;
 
-    @Autowired
     private ModelMapper modelMapper;
+
+    @Autowired
+    public HeroServiceImpl(HeroRepository heroRepository) {
+        this.heroRepository = heroRepository;
+    }
+
+    @Autowired
+    public void setUserRepository(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    @Autowired
+    public void setModelMapper(ModelMapper modelMapper) {
+        this.modelMapper = modelMapper;
+    }
 
     @Override
     public HeroDto createHero(HeroDto heroDto) {
@@ -79,7 +91,7 @@ public class HeroServiceImpl implements HeroService {
 
     @Override
     public List<HeroDto> loadHeroesByUser(String username) {
-        Optional<User> optionalUser = userRepository.findByUsername(username);
+        Optional<User> optionalUser = userRepository.findUserWithHeroesFetched(username);
         if (optionalUser.isEmpty()) {
             throw new UsernameNotFoundException("Username '" + username + "' not found!");
         }
