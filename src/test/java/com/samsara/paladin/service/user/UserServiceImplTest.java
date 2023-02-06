@@ -48,6 +48,7 @@ import com.samsara.paladin.repository.UserRepository;
 @ContextConfiguration(classes = {UserServiceImpl.class})
 public class UserServiceImplTest {
 
+    @Autowired
     private UserServiceImpl userService;
 
     @MockBean
@@ -64,11 +65,6 @@ public class UserServiceImplTest {
 
     @Captor
     private ArgumentCaptor<User> userArgumentCaptor;
-
-    @Autowired
-    public UserServiceImplTest(UserServiceImpl userService) {
-        this.userService = userService;
-    }
 
     @Test
     @DisplayName("Register user test when user is valid then correct")
@@ -192,7 +188,7 @@ public class UserServiceImplTest {
                 .password("testCryptPassword")
                 .build();
 
-        when(userRepository.findUserWithAllFetched(userDto.getUsername()))
+        when(userRepository.findByUsername(userDto.getUsername()))
                 .thenReturn(Optional.of(user));
         when(passwordEncoder.encode(user.getPassword()))
                 .thenReturn("testCryptPassword");
@@ -203,7 +199,7 @@ public class UserServiceImplTest {
 
         UserDto updatedUser = userService.updateUser(userDto);
 
-        verify(userRepository).findUserWithAllFetched(userDto.getUsername());
+        verify(userRepository).findByUsername(userDto.getUsername());
         verify(modelMapper).map(userDto, user);
         verify(passwordEncoder).encode(user.getPassword());
         verify(userRepository).save(userArgumentCaptor.capture());
@@ -228,12 +224,12 @@ public class UserServiceImplTest {
                 .username("test")
                 .build();
 
-        when(userRepository.findUserWithAllFetched(userDto.getUsername()))
+        when(userRepository.findByUsername(userDto.getUsername()))
                 .thenReturn(Optional.empty());
 
         assertThrows(UsernameNotFoundException.class, () -> {
             userService.updateUser(userDto);
-            verify(userRepository).findUserWithAllFetched(userDto.getUsername());
+            verify(userRepository).findByUsername(userDto.getUsername());
         });
     }
 
@@ -252,7 +248,7 @@ public class UserServiceImplTest {
                 .email("test@email.com")
                 .build();
 
-        when(userRepository.findUserWithAllFetched(userDto.getUsername()))
+        when(userRepository.findByUsername(userDto.getUsername()))
                 .thenReturn(Optional.of(user));
         when(userRepository.save(user))
                 .thenReturn(user);
@@ -261,7 +257,7 @@ public class UserServiceImplTest {
 
         UserDto updatedUser = userService.updateUser(userDto);
 
-        verify(userRepository).findUserWithAllFetched(userDto.getUsername());
+        verify(userRepository).findByUsername(userDto.getUsername());
         verify(modelMapper).map(userDto, user);
         verify(userRepository).save(user);
         verify(modelMapper).map(user, UserDto.class);
@@ -301,7 +297,7 @@ public class UserServiceImplTest {
         expectedRoles.add(roleUser);
         expectedRoles.add(roleAdmin);
 
-        when(userRepository.findUserWithAllFetched(userDto.getUsername()))
+        when(userRepository.findByUsername(userDto.getUsername()))
                 .thenReturn(Optional.of(user));
         when(roleRepository.findByName(RoleName.ADMIN))
                 .thenReturn(roleAdmin);
@@ -310,9 +306,9 @@ public class UserServiceImplTest {
         when(modelMapper.map(user, UserDto.class))
                 .thenReturn(userDto);
 
-        UserDto updatedUserDto = userService.assignAdminRoleToUser(userDto.getUsername());
+        UserDto updatedUserDto = userService.grantAdminRoleToUser(userDto.getUsername());
 
-        verify(userRepository).findUserWithAllFetched(userDto.getUsername());
+        verify(userRepository).findByUsername(userDto.getUsername());
         verify(roleRepository).findByName(RoleName.ADMIN);
         verify(userRepository).save(userArgumentCaptor.capture());
         User capturedUser = userArgumentCaptor.getValue();
@@ -329,12 +325,12 @@ public class UserServiceImplTest {
                 .username("test")
                 .build();
 
-        when(userRepository.findUserWithAllFetched(userDto.getUsername()))
+        when(userRepository.findByUsername(userDto.getUsername()))
                 .thenReturn(Optional.empty());
 
         assertThrows(UsernameNotFoundException.class, () -> {
-            userService.assignAdminRoleToUser(userDto.getUsername());
-            verify(userRepository).findUserWithAllFetched(userDto.getUsername());
+            userService.grantAdminRoleToUser(userDto.getUsername());
+            verify(userRepository).findByUsername(userDto.getUsername());
             verify(userRepository, never()).save(any());
         });
     }
@@ -601,6 +597,208 @@ public class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("Load first added users test when no users found")
+    void loadFirstAddedUsersTestWhenNoUsersFound() {
+
+        when(userRepository.findFirst10ByOrderByCreationDateAsc())
+                .thenReturn(new ArrayList<>());
+
+        List<UserDto> responseList = userService.loadFirst10AddedUsers();
+
+        verify(userRepository).findFirst10ByOrderByCreationDateAsc();
+        verify(modelMapper, never()).map(any(), any());
+
+        assertEquals(0, responseList.size());
+    }
+
+    @Test
+    @DisplayName("Load first added users test")
+    void loadFirstAddedUsersTestWhenMultipleUsersFound() {
+
+        UserDto userDto1 = UserDto.builder()
+                .id(1L)
+                .username("Test")
+                .build();
+        UserDto userDto2 = UserDto.builder()
+                .id(2L)
+                .username("Test")
+                .build();
+        List<UserDto> expectedResponseList = new ArrayList<>(Arrays.asList(userDto1, userDto2));
+
+        User user1 = User.builder()
+                .id(1L)
+                .username("Test")
+                .build();
+        User user2 = User.builder()
+                .id(2L)
+                .username("Test")
+                .build();
+        List<User> usersInDb = new ArrayList<>(Arrays.asList(user1, user2));
+
+        when(userRepository.findFirst10ByOrderByCreationDateAsc())
+                .thenReturn(usersInDb);
+        when(modelMapper.map(user1, UserDto.class))
+                .thenReturn(userDto1);
+        when(modelMapper.map(user2, UserDto.class))
+                .thenReturn(userDto2);
+
+        List<UserDto> responseList = userService.loadFirst10AddedUsers();
+
+        verify(userRepository).findFirst10ByOrderByCreationDateAsc();
+        verify(modelMapper).map(user1, UserDto.class);
+        verify(modelMapper).map(user2, UserDto.class);
+
+        assertEquals(expectedResponseList.size(), responseList.size());
+    }
+
+    @Test
+    @DisplayName("Load last added users test when no users found")
+    void loadLastAddedUsersTestWhenNoUsersFound() {
+
+        when(userRepository.findFirst10ByOrderByCreationDateDesc())
+                .thenReturn(new ArrayList<>());
+
+        List<UserDto> responseList = userService.loadLast10AddedUsers();
+
+        verify(userRepository).findFirst10ByOrderByCreationDateDesc();
+        verify(modelMapper, never()).map(any(), any());
+
+        assertEquals(0, responseList.size());
+    }
+
+    @Test
+    @DisplayName("Load last added users test")
+    void loadLastAddedUsersTestWhenMultipleUsersFound() {
+
+        UserDto userDto1 = UserDto.builder()
+                .id(1L)
+                .username("Test")
+                .build();
+        UserDto userDto2 = UserDto.builder()
+                .id(2L)
+                .username("Test")
+                .build();
+        List<UserDto> expectedResponseList = new ArrayList<>(Arrays.asList(userDto1, userDto2));
+
+        User user1 = User.builder()
+                .id(1L)
+                .username("Test")
+                .build();
+        User user2 = User.builder()
+                .id(2L)
+                .username("Test")
+                .build();
+        List<User> usersInDb = new ArrayList<>(Arrays.asList(user1, user2));
+
+        when(userRepository.findFirst10ByOrderByCreationDateDesc())
+                .thenReturn(usersInDb);
+        when(modelMapper.map(user1, UserDto.class))
+                .thenReturn(userDto1);
+        when(modelMapper.map(user2, UserDto.class))
+                .thenReturn(userDto2);
+
+        List<UserDto> responseList = userService.loadLast10AddedUsers();
+
+        verify(userRepository).findFirst10ByOrderByCreationDateDesc();
+        verify(modelMapper).map(user1, UserDto.class);
+        verify(modelMapper).map(user2, UserDto.class);
+
+        assertEquals(expectedResponseList.size(), responseList.size());
+    }
+
+    @Test
+    @DisplayName("Load enabled users test")
+    void loadEnabledUsersTest() {
+        UserDto userDto1 = UserDto.builder()
+                .id(1L)
+                .enabled(true)
+                .build();
+        UserDto userDto2 = UserDto.builder()
+                .id(2L)
+                .enabled(true)
+                .build();
+        List<UserDto> expectedResponseList = new ArrayList<>(Arrays.asList(userDto1, userDto2));
+
+        User user1 = User.builder()
+                .id(1L)
+                .enabled(true)
+                .build();
+        User user2 = User.builder()
+                .id(2L)
+                .enabled(true)
+                .build();
+        List<User> usersInDb = new ArrayList<>(Arrays.asList(user1, user2));
+
+        when(userRepository.findByEnabled(true))
+                .thenReturn(usersInDb);
+        when(modelMapper.map(user1, UserDto.class))
+                .thenReturn(userDto1);
+        when(modelMapper.map(user2, UserDto.class))
+                .thenReturn(userDto2);
+
+        List<UserDto> responseList = userService.loadEnabledUsers();
+
+        verify(userRepository).findByEnabled(true);
+        verify(modelMapper).map(user1, UserDto.class);
+        verify(modelMapper).map(user2, UserDto.class);
+
+        assertEquals(expectedResponseList.size(), responseList.size());
+    }
+
+    @Test
+    @DisplayName("Load admins test")
+    void loadAdminsTest() {
+
+        Role roleAdmin = Role.builder()
+                .id(1L)
+                .name(RoleName.ADMIN)
+                .build();
+        Role roleUser = Role.builder()
+                .id(2L)
+                .name(RoleName.USER)
+                .build();
+
+        Set<Role> roles = new HashSet<>();
+        roles.add(roleAdmin);
+        roles.add(roleUser);
+
+        UserDto userDto1 = UserDto.builder()
+                .id(1L)
+                .build();
+        UserDto userDto2 = UserDto.builder()
+                .id(2L)
+                .build();
+        List<UserDto> expectedResponseList = new ArrayList<>(Arrays.asList(userDto1, userDto2));
+
+        User user1 = User.builder()
+                .id(1L)
+                .roles(roles)
+                .build();
+        User user2 = User.builder()
+                .id(2L)
+                .roles(roles)
+                .build();
+        List<User> usersInDb = new ArrayList<>(Arrays.asList(user1, user2));
+
+        when(roleRepository.findByName(RoleName.ADMIN))
+                .thenReturn(roleAdmin);
+        when(userRepository.findByRoles(roleAdmin))
+                .thenReturn(usersInDb);
+        when(modelMapper.map(user1, UserDto.class))
+                .thenReturn(userDto1);
+        when(modelMapper.map(user2, UserDto.class))
+                .thenReturn(userDto2);
+
+        List<UserDto> responseList = userService.loadAdmins();
+
+        verify(userRepository).findByRoles(roleAdmin);
+        verify(modelMapper).map(user1, UserDto.class);
+        verify(modelMapper).map(user2, UserDto.class);
+
+        assertEquals(expectedResponseList.size(), responseList.size());
+    }
+
+    @Test
     @DisplayName("Load users by last name test when no users are stored")
     void loadUsersByLastNameTestWhenNoUsersAreStored() {
 
@@ -632,7 +830,7 @@ public class UserServiceImplTest {
                 .secretAnswer("testSecretAnswer")
                 .build();
 
-        when(userRepository.findUserWithAllFetched("Test"))
+        when(userRepository.findByUsername("Test"))
                 .thenReturn(Optional.of(storedUser));
         when(passwordEncoder.encode("newPassword"))
                 .thenReturn("encodedPassword");
@@ -641,7 +839,7 @@ public class UserServiceImplTest {
 
         boolean response = userService.resetUserPassword(resetPasswordDetails);
 
-        verify(userRepository).findUserWithAllFetched("Test");
+        verify(userRepository).findByUsername("Test");
         verify(passwordEncoder).encode("newPassword");
         verify(userRepository).save(userArgumentCaptor.capture());
         User capturedUser = userArgumentCaptor.getValue();
@@ -670,12 +868,12 @@ public class UserServiceImplTest {
                 .secretAnswer("testSecretAnswer")
                 .build();
 
-        when(userRepository.findUserWithAllFetched("Test"))
+        when(userRepository.findByUsername("Test"))
                 .thenReturn(Optional.of(storedUser));
 
         assertThrows(ResetPasswordFailedException.class, () -> {
             userService.resetUserPassword(resetPasswordDetails);
-            verify(userRepository).findUserWithAllFetched("Test");
+            verify(userRepository).findByUsername("Test");
             verify(passwordEncoder, never()).encode(anyString());
             verify(userRepository, never()).save(any());
         });

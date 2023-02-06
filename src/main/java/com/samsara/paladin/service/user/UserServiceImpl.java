@@ -19,6 +19,7 @@ import com.samsara.paladin.exceptions.user.EmailNotFoundException;
 import com.samsara.paladin.exceptions.user.ResetPasswordFailedException;
 import com.samsara.paladin.exceptions.user.UsernameExistsException;
 import com.samsara.paladin.exceptions.user.UsernameNotFoundException;
+import com.samsara.paladin.model.Role;
 import com.samsara.paladin.model.User;
 import com.samsara.paladin.repository.RoleRepository;
 import com.samsara.paladin.repository.UserRepository;
@@ -26,7 +27,7 @@ import com.samsara.paladin.repository.UserRepository;
 @Service
 public class UserServiceImpl implements UserService {
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     private RoleRepository roleRepository;
 
@@ -72,7 +73,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto updateUser(UserDto userDto) {
-        Optional<User> optionalUser = userRepository.findUserWithAllFetched(userDto.getUsername());
+        Optional<User> optionalUser = userRepository.findByUsername(userDto.getUsername());
         if (optionalUser.isEmpty()) {
             throw new UsernameNotFoundException("Username '" + userDto.getUsername() + "' not found!");
         }
@@ -86,8 +87,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto assignAdminRoleToUser(String username) {
-        Optional<User> optionalUser = userRepository.findUserWithAllFetched(username);
+    public UserDto grantAdminRoleToUser(String username) {
+        Optional<User> optionalUser = userRepository.findByUsername(username);
         if (optionalUser.isEmpty()) {
             throw new UsernameNotFoundException("Username '" + username + "' not found!");
         }
@@ -118,7 +119,6 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(
                         () -> new UsernameNotFoundException(String.format("Username '%s' not found!", username))
                 );
-
     }
 
     @Override
@@ -141,10 +141,31 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<UserDto> loadFirst10AddedUsers() {
+        return convertToDtoList(userRepository.findFirst10ByOrderByCreationDateAsc());
+    }
+
+    @Override
+    public List<UserDto> loadLast10AddedUsers() {
+        return convertToDtoList(userRepository.findFirst10ByOrderByCreationDateDesc());
+    }
+
+    @Override
+    public List<UserDto> loadEnabledUsers() {
+        return convertToDtoList(userRepository.findByEnabled(true));
+    }
+
+    @Override
+    public List<UserDto> loadAdmins() {
+        Role role = roleRepository.findByName(RoleName.ADMIN);
+        return convertToDtoList(userRepository.findByRoles(role));
+    }
+
+    @Override
     public boolean resetUserPassword(ResetPasswordDetails resetPasswordDetails) {
 
-        userRepository.findUserWithAllFetched(resetPasswordDetails.getUsername())
-                .filter(user -> resetPasswordDetails.getSecretAnswer().equals(user.getSecretAnswer()))
+        userRepository.findByUsername(resetPasswordDetails.getUsername())
+                .filter(user -> user.getSecretAnswer().equals(resetPasswordDetails.getSecretAnswer()))
                 .map(user -> encryptUserPassword(user, resetPasswordDetails.getNewPassword()))
                 .map(this::saveUser)
                 .orElseThrow(

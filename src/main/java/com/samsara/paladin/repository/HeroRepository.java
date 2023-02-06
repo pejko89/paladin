@@ -3,7 +3,6 @@ package com.samsara.paladin.repository;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
 
@@ -22,35 +21,13 @@ public interface HeroRepository extends ListCrudRepository<Hero, Long> {
 
     List<Hero> findByLevel(Integer level);
 
-    @Query(
-            "SELECT h "
-                    + "FROM Hero h "
-                    + "WHERE h.level >= :level "
-    )
-    List<Hero> findByMinLevel(Integer level);
+    List<Hero> findByLevelGreaterThan(Integer level);
 
-    @Query(
-            "SELECT h "
-                    + "FROM Hero h "
-                    + "WHERE h.level <= :level "
-    )
-    List<Hero> findByMaxLevel(Integer level);
+    List<Hero> findByLevelLessThan(Integer level);
 
-    @Query(
-            "SELECT h "
-                    + "FROM Hero h "
-                    + "ORDER BY h.level DESC "
-                    + "LIMIT :numberOfHeroes "
-    )
-    List<Hero> findBestByLevel(Integer numberOfHeroes);
+    List<Hero> findFirst10ByOrderByLevelDesc();
 
-    @Query(
-            "SELECT h "
-                    + "FROM Hero h "
-                    + "ORDER BY h.creationDate DESC "
-                    + "LIMIT :numberOfHeroes "
-    )
-    List<Hero> findLastAdded(Integer numberOfHeroes);
+    List<Hero> findByOrderByCreationDateDesc();
 
     boolean existsByName(String name);
 }

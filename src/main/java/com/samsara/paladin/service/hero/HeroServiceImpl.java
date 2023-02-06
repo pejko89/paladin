@@ -21,7 +21,7 @@ import com.samsara.paladin.repository.UserRepository;
 @Service
 public class HeroServiceImpl implements HeroService {
 
-    private HeroRepository heroRepository;
+    private final HeroRepository heroRepository;
 
     private UserRepository userRepository;
 
@@ -91,7 +91,7 @@ public class HeroServiceImpl implements HeroService {
 
     @Override
     public List<HeroDto> loadHeroesByUser(String username) {
-        Optional<User> optionalUser = userRepository.findUserWithHeroesFetched(username);
+        Optional<User> optionalUser = userRepository.findByUsername(username);
         if (optionalUser.isEmpty()) {
             throw new UsernameNotFoundException("Username '" + username + "' not found!");
         }
@@ -110,22 +110,22 @@ public class HeroServiceImpl implements HeroService {
 
     @Override
     public List<HeroDto> loadHeroesByMinLevel(Integer level) {
-        return convertToDtoList(heroRepository.findByMinLevel(level));
+        return convertToDtoList(heroRepository.findByLevelGreaterThan(level));
     }
 
     @Override
     public List<HeroDto> loadHeroesByMaxLevel(Integer level) {
-        return convertToDtoList(heroRepository.findByMaxLevel(level));
+        return convertToDtoList(heroRepository.findByLevelLessThan(level));
     }
 
     @Override
-    public List<HeroDto> loadBestHeroesByLevel(Integer numberOfHeroes) {
-        return convertToDtoList(heroRepository.findBestByLevel(numberOfHeroes));
+    public List<HeroDto> loadBest10HeroesByLevel() {
+        return convertToDtoList(heroRepository.findFirst10ByOrderByLevelDesc());
     }
 
     @Override
-    public List<HeroDto> loadLastAdded(Integer numberOfHeroes) {
-        return convertToDtoList(heroRepository.findLastAdded(numberOfHeroes));
+    public List<HeroDto> loadLast10AddedHeroes() {
+        return convertToDtoList(heroRepository.findByOrderByCreationDateDesc());
     }
 
     private List<HeroDto> convertToDtoList(List<Hero> heroes) {

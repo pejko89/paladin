@@ -9,7 +9,6 @@ import com.samsara.paladin.enums.HeroType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -45,7 +44,7 @@ public class Hero {
     @DateTimeFormat(pattern = "dd.MM.yyyy HH:mm")
     private Date creationDate;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
 }

@@ -12,9 +12,9 @@ import com.samsara.paladin.service.jwt.TokenService;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    @Autowired
     private final TokenService tokenService;
 
+    @Autowired
     public AuthController(TokenService tokenService) {
         this.tokenService = tokenService;
     }

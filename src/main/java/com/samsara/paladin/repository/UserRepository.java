@@ -8,6 +8,7 @@ import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.samsara.paladin.model.Role;
 import com.samsara.paladin.model.User;
 
 @Repository
@@ -29,15 +30,6 @@ public interface UserRepository extends ListCrudRepository<User, Long> {
     )
     Optional<User> findUserWithHeroesFetched(@Param("username") String username);
 
-    @Query(
-            "SELECT u "
-                    + "FROM User u "
-                    + "JOIN FETCH u.roles "
-                    + "JOIN FETCH u.heroes "
-                    + "WHERE u.username = :username "
-    )
-    Optional<User> findUserWithAllFetched(@Param("username") String username);
-
     Optional<User> findByUsername(String username);
 
     Optional<User> findByEmail(String email);
@@ -45,6 +37,14 @@ public interface UserRepository extends ListCrudRepository<User, Long> {
     List<User> findByFirstName(String firstName);
 
     List<User> findByLastName(String firstName);
+
+    List<User> findFirst10ByOrderByCreationDateAsc();
+
+    List<User> findFirst10ByOrderByCreationDateDesc();
+
+    List<User> findByEnabled(boolean enabled);
+
+    List<User> findByRoles(Role role);
 
     boolean existsByUsername(String username);
 

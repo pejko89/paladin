@@ -27,7 +27,7 @@ public interface HeroService {
 
     List<HeroDto> loadHeroesByMaxLevel(Integer level);
 
-    List<HeroDto> loadBestHeroesByLevel(Integer numberOfHeroes);
+    List<HeroDto> loadBest10HeroesByLevel();
 
-    List<HeroDto> loadLastAdded(Integer numberOfHeroes);
+    List<HeroDto> loadLast10AddedHeroes();
 }

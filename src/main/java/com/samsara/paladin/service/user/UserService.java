@@ -11,7 +11,7 @@ public interface UserService {
 
     UserDto updateUser(UserDto userDto);
 
-    UserDto assignAdminRoleToUser(String username);
+    UserDto grantAdminRoleToUser(String username);
 
     void deleteUser(String username);
 
@@ -24,6 +24,14 @@ public interface UserService {
     List<UserDto> loadUsersByFirstName(String firstName);
 
     List<UserDto> loadUsersByLastName(String lastName);
+
+    List<UserDto> loadFirst10AddedUsers();
+
+    List<UserDto> loadLast10AddedUsers();
+
+    List<UserDto> loadEnabledUsers();
+
+    List<UserDto> loadAdmins();
 
     boolean resetUserPassword(ResetPasswordDetails resetPasswordDetails);
 }

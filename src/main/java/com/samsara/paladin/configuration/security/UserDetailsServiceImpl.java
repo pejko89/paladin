@@ -11,19 +11,24 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
 
 import com.samsara.paladin.model.Permission;
 import com.samsara.paladin.model.Role;
 import com.samsara.paladin.model.User;
+import com.samsara.paladin.repository.PermissionRepository;
 import com.samsara.paladin.repository.UserRepository;
 
+@Service
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final PermissionRepository permissionRepository;
 
     @Autowired
-    public void setUserRepository(UserRepository userRepository) {
+    public UserDetailsServiceImpl(UserRepository userRepository, PermissionRepository permissionRepository) {
         this.userRepository = userRepository;
+        this.permissionRepository = permissionRepository;
     }
 
     @Override
@@ -51,8 +56,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         );
     }
 
-    private Collection<? extends GrantedAuthority> getAuthorities(
-            Collection<Role> roles) {
+    private Collection<? extends GrantedAuthority> getAuthorities(Collection<Role> roles) {
         List<String> permissions = getPermissions(roles);
         return getGrantedAuthorities(permissions);
     }
@@ -62,7 +66,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         List<Permission> permissions = new ArrayList<>();
         for (Role role : roles) {
             grantedAuthorities.add(role.getName().getAuthority());
-            permissions.addAll(role.getPermissions());
+            permissions.addAll(permissionRepository.getPermissionsByRole(role.getName()));
         }
         for (Permission permission : permissions) {
             grantedAuthorities.add(permission.getName().name());

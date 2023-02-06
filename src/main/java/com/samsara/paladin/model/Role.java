@@ -4,11 +4,9 @@ import java.util.Set;
 
 import com.samsara.paladin.enums.RoleName;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -41,7 +39,7 @@ public class Role {
     @ManyToMany(mappedBy = "roles")
     private Set<User> users;
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ManyToMany
     @JoinTable(
             name = "roles_permissions",
             joinColumns = @JoinColumn(

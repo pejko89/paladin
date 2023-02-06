@@ -29,6 +29,7 @@ public class ResetPasswordDetails {
     private String secretAnswer;
 
     @NotEmpty
+    @Size(min = ValidationConstants.PASSWORD_MIN_SIZE, max = ValidationConstants.PASSWORD_MAX_SIZE)
     @Pattern(regexp = ValidationConstants.PASSWORD_PATTERN,
             message = ValidationConstants.PASSWORD_MESSAGE)
     private String newPassword;
